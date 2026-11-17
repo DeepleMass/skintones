@@ -2,18 +2,21 @@
 """
 start.py — Start-Skript: Projekt im Webbrowser öffnen.
 
-Ablauf:
-    1. Flask-Server (flask_app/app.py) als Subprozess starten.
-    2. Poll auf /api/health, bis der Server antwortet (max. ~10 s).
-    3. Standard-Browser per webbrowser.open() auf http://127.0.0.1:<port>/ öffnen.
-    4. Warten, bis der User Strg+C drückt, dann Server sauber beenden.
+Lliegt im Repo-Root (neben webapp/). Ablauf:
+    1. webapp/-Verzeichnis finden (Repo-Root -> ./webapp, Fallback: Skript
+       liegt selbst in webapp/).
+    2. Flask-Server (webapp/flask_app/app.py) als Subprozess starten.
+    3. Poll auf /api/health, bis der Server antwortet (max. ~10 s).
+    4. Standard-Browser per webbrowser.open() auf http://127.0.0.1:<port>/ öffnen.
+    5. Warten, bis der User Strg+C drückt, dann Server sauber beenden.
 
-Aufruf (aus dem webapp/-Verzeichnis):
+Aufruf (aus dem Repo-Root):
     python3 start.py                 # Port 5824, Browser öffnet automatisch
+    ./start.sh                       # dasselbe als Shell-Wrapper
     python3 start.py --port 8080     # anderer Port
     python3 start.py --no-browser    # nur Server, kein Browser öffnen
 
-Voraussetzung: Flask installiert (pip install -r flask_app/requirements.txt).
+Voraussetzung: Flask installiert (pip install -r webapp/flask_app/requirements.txt).
 Hinweis Webcam: getUserMedia braucht einen "secure context" —
 http://127.0.0.1 und http://localhost gelten als sicher, daher klappt die
 Webcam ohne HTTPS.
@@ -27,8 +30,18 @@ import urllib.request
 import webbrowser
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parent  # webapp/
 HOST = "127.0.0.1"
+
+# Skript-Verzeichnis; webapp/ liegt normalerweise daneben (Repo-Root).
+SCRIPT_DIR = Path(__file__).resolve().parent
+if (SCRIPT_DIR / "webapp" / "index.html").is_file():
+    WEBAPP_DIR = SCRIPT_DIR / "webapp"
+elif (SCRIPT_DIR / "index.html").is_file():
+    WEBAPP_DIR = SCRIPT_DIR  # Fallback: Skript liegt direkt in webapp/
+else:
+    raise SystemExit(
+        f"[start] FEHLER: webapp/index.html nicht gefunden (gesucht ab {SCRIPT_DIR})."
+    )
 
 
 def wait_for_health(port: int, timeout_s: float = 10.0) -> bool:
@@ -53,17 +66,21 @@ def main() -> int:
 
     url = f"http://{HOST}:{args.port}/"
 
-    # 1) Flask als Subprozess starten (nicht debug, damit kein Reloader-Workaround nötig)
+    # 1) Flask als Subprozess starten (cwd = webapp/, damit das App-Modul
+    #    flask_app.app:app aufgelöst wird; nicht debug, damit kein
+    #    Reloader-Workaround nötig ist)
     cmd = [
         sys.executable, "-m", "flask",
         "--app", "flask_app.app:app",
         "run", "--host", HOST, "--port", str(args.port),
     ]
-    print(f"[start] Flask starten: {' '.join(cmd)}")
+    print(f"[start] Webapp-Verzeichnis: {WEBAPP_DIR}")
+    print(f"[start] Flask starten: {' '.join(cmd)} (cwd={WEBAPP_DIR})")
     try:
-        proc = subprocess.Popen(cmd, cwd=ROOT)
+        proc = subprocess.Popen(cmd, cwd=WEBAPP_DIR)
     except FileNotFoundError:
-        print("[start] FEHLER: Flask nicht installiert. Bitte: pip install -r flask_app/requirements.txt")
+        req = WEBAPP_DIR / "flask_app" / "requirements.txt"
+        print(f"[start] FEHLER: Flask nicht installiert. Bitte: pip install -r {req}")
         return 1
 
     # 2) Warten, bis der Server erreichbar ist

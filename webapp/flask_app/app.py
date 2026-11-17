@@ -8,9 +8,10 @@ Bildverarbeitung — die Pipeline läuft komplett im Browser (Canvas).
 Start (Varianten):
     python3 flask_app/app.py                 # direkt, Port 5824
     flask --app flask_app/app run --port 5824 # über die Flask-CLI
-    python3 start.py                          # startet Server UND öffnet Browser
+    python3 ../start.py                       # aus webapp/ (Repo-Root: python3 start.py)
 
-Getestet mit: python3 -m unittest flask_app/test_app.py  (von webapp/ aus)
+Getestet mit: python3 -m unittest flask_app.test_app        (aus webapp/)
+           oder: python3 -m unittest skintones.webapp.flask_app.test_app  (vom Repo-Elternordner)
 """
 
 from pathlib import Path

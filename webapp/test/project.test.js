@@ -9,7 +9,8 @@ import { readFileSync, existsSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 
-const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
+const ROOT = join(dirname(fileURLToPath(import.meta.url)), ".."); // webapp/
+const REPO_ROOT = join(ROOT, ".."); // Git-Repo-Root (liegt eine Ebene über webapp/)
 
 test("index.html referenziert nur Dateien, die existieren", () => {
   const html = readFileSync(join(ROOT, "index.html"), "utf8");
@@ -20,12 +21,12 @@ test("index.html referenziert nur Dateien, die existieren", () => {
   }
 });
 
-test("Projektstruktur ist vollständig (Kernmodule, UI, Flask, Start, Doku)", () => {
-  const files = [
+test("Projektstruktur ist vollständig (webapp/ und Repo-Root)", () => {
+  // Dateien innerhalb von webapp/
+  const webappFiles = [
     "package.json",
     "index.html",
     "styles.css",
-    "README.md",
     "src/hsv.js",
     "src/blur.js",
     "src/pipeline.js",
@@ -34,11 +35,14 @@ test("Projektstruktur ist vollständig (Kernmodule, UI, Flask, Start, Doku)", ()
     "flask_app/app.py",
     "flask_app/requirements.txt",
     "flask_app/test_app.py",
-    "start.py",
-    "start.sh",
   ];
-  for (const f of files) {
-    assert.ok(existsSync(join(ROOT, f)), `fehlt: ${f}`);
+  for (const f of webappFiles) {
+    assert.ok(existsSync(join(ROOT, f)), `fehlt in webapp/: ${f}`);
+  }
+  // Start-Skripte, Doku und .gitignore liegen im Repo-Root (eine Ebene höher)
+  const repoFiles = ["README.md", "start.py", "start.sh", ".gitignore"];
+  for (const f of repoFiles) {
+    assert.ok(existsSync(join(REPO_ROOT, f)), `fehlt im Repo-Root: ${f}`);
   }
 });
 

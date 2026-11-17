@@ -1,17 +1,28 @@
 """
 test_app.py — Tests für den Flask-Server (ohne laufenden Port, via test_client).
 
-Aufruf (aus dem webapp/-Verzeichnis):
-    python3 -m unittest flask_app/test_app.py -v
+Aufruf (zwei Varianten):
+    # 1) als Repo-Paket vom Elternordner des Repos (skintones/):
+    cd .. && python3 -m unittest skintones.webapp.flask_app.test_app -v
+    # 2) klassisch aus webapp/ heraus (sys.path-Fallback unten):
+    cd webapp && python3 -m unittest flask_app.test_app -v
     oder: python3 -m pytest flask_app/test_app.py
 """
 
+import sys
 import unittest
 from pathlib import Path
 
-# app.py liegt im selben Verzeichnis -> direkter Import möglich,
-# wenn das Modul von webapp/ aus gestartet wird (sys.path enthält webapp/).
-from skintones.webapp.flask_app.app import app, WEBAPP_ROOT
+# Bevorzugt: Import als Repo-Paket (skintones.webapp.flask_app.app) —
+# funktioniert, wenn das Repo als Verzeichnis "skintones" auf dem sys.path
+# liegt (z. B. Aufruf vom Elternordner des Repos).
+try:
+    from skintones.webapp.flask_app.app import app, WEBAPP_ROOT
+except ModuleNotFoundError:
+    # Fallback: webapp/ auf den sys.path legen, dann direkter Import
+    # (funktioniert bei Aufruf aus webapp/: python3 -m unittest flask_app.test_app)
+    sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+    from flask_app.app import app, WEBAPP_ROOT
 
 
 class FlaskAppTest(unittest.TestCase):
