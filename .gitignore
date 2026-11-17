@@ -1,0 +1,13 @@
+# Rust-Build-Artefakte — dort liegen alle kompilierten Binaries
+# (ohne führenden Slash, damit rust/target/ auf jeder Ebene greift)
+target/
+
+# generierte Demo-/Ergebnisbilder (VS-Code-Tasks schreiben nach skintones/out/)
+out/
+
+# Python
+__pycache__/
+*.pyc
+
+# macOS
+.DS_Store

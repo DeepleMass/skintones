@@ -1,0 +1,23 @@
+# ============================================================================
+# skintone-lab — HSV-basierte Farbbereich-Selektion (Hautfarb-Experiment)
+#
+# Komplettes Cargo-Projekt: Library (lib) + Kommandozeilenprogramm (bin).
+# Das Python-GUI in ../python ruft das Binary als Subprozess auf.
+# ============================================================================
+
+[package]
+name = "skintone-lab"
+version = "0.1.0"
+edition = "2021"
+description = "Wählt Pixel um einen HSV-Hue-Wert aus und blurt/dunkelt den Rest des Bildes (Hautfarb-Experiment)"
+license = "MIT"
+
+# image  = Dekodieren/Enkodieren gängiger Bildformate (PNG, JPEG, ...)
+# clap   = Kommandozeilenschnittstelle des Binaries
+[dependencies]
+image = "0.25"
+clap = { version = "4", features = ["derive"] }
+
+# Release-Build: maximale Optimierung für die Pixel-Schleifen
+[profile.release]
+opt-level = 3

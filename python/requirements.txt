@@ -1,0 +1,5 @@
+# Pflicht: Bildanzeige und -skalierung in der tkinter-GUI
+Pillow>=10.0
+
+# Optional: nur für die Webcam-Funktion (Frame aufnehmen)
+# opencv-python>=4.8
