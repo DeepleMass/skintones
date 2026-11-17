@@ -1,0 +1,11 @@
+{
+  "name": "skintone-webapp",
+  "version": "1.0.0",
+  "description": "Skintone-Experiment: HSV-Hue-Filter als reine JavaScript-Web-App (Upload/Webcam, Hue+Toleranz, Blur+Darken des Hintergrunds). Ohne Build-Schritt und ohne Runtime-Dependencies.",
+  "type": "module",
+  "scripts": {
+    "test": "node --test",
+    "start": "python3 start.py"
+  },
+  "license": "MIT"
+}

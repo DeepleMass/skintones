@@ -1,0 +1,3 @@
+# Python-Artefakte (z. B. durch flask_app-Tests erzeugt)
+__pycache__/
+*.pyc

@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <!-- Metadaten der Anwendung: Skintone-Experiment (HSV-Hue-Filter) -->
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Skintone-Lab — HSV-Hue-Filter</title>
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <header>
+    <h1>Skintone-Lab</h1>
+    <p class="subtitle">
+      Portrait laden oder per Webcam aufnehmen, Hue + Toleranz wählen —
+      alles außerhalb des Hue-Bereichs wird geblurt und abgedunkelt.
+    </p>
+  </header>
+
+  <main>
+    <!-- ============ Steuerungsbereich ============ -->
+    <section class="controls" aria-label="Steuerung">
+      <fieldset>
+        <legend>Bildquelle</legend>
+        <!-- Datei-Upload: normales <input type="file"> -->
+        <input type="file" id="fileInput" accept="image/*" hidden />
+        <button id="btnLoad" type="button">Bild laden …</button>
+        <!-- Webcam: getUserMedia; "Foto aufnehmen" greift den aktuellen Frame -->
+        <button id="btnWebcamStart" type="button">Webcam starten</button>
+        <button id="btnCapture" type="button" disabled>Foto aufnehmen</button>
+        <button id="btnWebcamStop" type="button" disabled>Webcam stoppen</button>
+        <!-- Demo-Bild: synthetisches Portrait, damit man sofort loslegen kann -->
+        <button id="btnDemo" type="button">Demo-Portrait</button>
+      </fieldset>
+
+      <fieldset>
+        <legend>Hue-Filter</legend>
+        <!-- Hue des Zielfarbwerts in Grad [0, 360) -->
+        <label for="hue">Hue (0–359°)</label>
+        <input type="range" id="hue" min="0" max="359" step="1" value="25" />
+        <input type="number" id="hueNum" min="0" max="359" step="1" value="25" />
+        <!-- Toleranz +/- in Grad um den Hue-Wert -->
+        <label for="tolerance">Toleranz ± (°)</label>
+        <input type="range" id="tolerance" min="0" max="180" step="1" value="20" />
+        <input type="number" id="toleranceNum" min="0" max="180" step="1" value="20" />
+        <!-- Vorschau-Farbpunkt, zeigt den gewählten Hue -->
+        <span id="huePreview" class="hue-preview" title="gewählter Hue"></span>
+      </fieldset>
+
+      <fieldset>
+        <legend>Effekt auf Nicht-Treffer</legend>
+        <!-- Sigma des Gaussian-Blur für den Hintergrund -->
+        <label for="blur">Blur-Stärke (σ)</label>
+        <input type="range" id="blur" min="0" max="20" step="0.5" value="8" />
+        <input type="number" id="blurNum" min="0" max="20" step="0.5" value="8" />
+        <!-- Faktor, um den der Value (Helligkeit) abgesenkt wird -->
+        <label for="darken">Value-Absenkung</label>
+        <input type="range" id="darken" min="0" max="1" step="0.05" value="0.6" />
+        <input type="number" id="darkenNum" min="0" max="1" step="0.05" value="0.6" />
+        <!-- Weichzeichnung der Maskenkante -->
+        <label for="feather">Kanten-Weichzeichnung</label>
+        <input type="range" id="feather" min="0" max="10" step="0.5" value="3" />
+        <input type="number" id="featherNum" min="0" max="10" step="0.5" value="3" />
+      </fieldset>
+
+      <fieldset>
+        <legend>Aktionen</legend>
+        <!-- Verarbeiten startet die Pipeline explizit ... -->
+        <button id="btnApply" type="button" disabled>Verarbeiten</button>
+        <!-- Zurücksetzen = Restart: Original wiederherstellen, Ergebnis leeren -->
+        <button id="btnReset" type="button" disabled>Zurücksetzen</button>
+        <!-- Ergebnis als PNG herunterladen -->
+        <button id="btnSave" type="button" disabled>Ergebnis speichern</button>
+      </fieldset>
+    </section>
+
+    <!-- ============ Webcam-Vorschau (versteckt bis Webcam aktiv) ============ -->
+    <section id="webcamSection" class="webcam hidden" aria-label="Webcam">
+      <video id="webcamVideo" autoplay playsinline muted></video>
+      <p class="hint">Webcam läuft — "Foto aufnehmen" übernimmt den aktuellen Frame.</p>
+    </section>
+
+    <!-- ============ Bildanzeige: Original vs. Ergebnis ============ -->
+    <section class="views" aria-label="Bildanzeige">
+      <figure>
+        <figcaption>Original</figcaption>
+        <canvas id="canvasOriginal" width="640" height="480"></canvas>
+      </figure>
+      <figure>
+        <figcaption>Ergebnis (Hue-Filter)</figcaption>
+        <canvas id="canvasResult" width="640" height="480"></canvas>
+      </figure>
+    </section>
+
+    <!-- Statuszeile: Meldungen, Pixel-Statistik, Laufzeit der Pipeline -->
+    <footer id="status" role="status">Bereit. Bitte ein Bild laden, Webcam starten oder Demo-Portrait verwenden.</footer>
+  </main>
+
+  <!-- ES-Modul-Einstieg; app.js verdrahtet alle Buttons und Canvases -->
+  <script type="module" src="./src/app.js"></script>
+</body>
+</html>

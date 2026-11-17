@@ -1,0 +1,189 @@
+/* ==========================================================================
+   Skintone-Lab — Stylesheet
+   Schlichtes "Labor"-Design: dunkler Hintergrund, helle Karten, klare Controls.
+   ========================================================================== */
+
+:root {
+  --bg: #14171c;
+  --panel: #1e232b;
+  --panel-border: #2e3540;
+  --text: #e8eaed;
+  --muted: #9aa3af;
+  --accent: #4f8cff;
+  --accent-hover: #6b9dff;
+  --danger: #e5534b;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.45;
+}
+
+header {
+  padding: 1.25rem 1.5rem 0.5rem;
+}
+
+header h1 {
+  margin: 0;
+  font-size: 1.6rem;
+}
+
+.subtitle {
+  margin: 0.25rem 0 0;
+  color: var(--muted);
+  max-width: 70ch;
+}
+
+main {
+  padding: 1rem 1.5rem 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+/* ---------- Steuerungsbereich ---------- */
+
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+fieldset {
+  background: var(--panel);
+  border: 1px solid var(--panel-border);
+  border-radius: 8px;
+  padding: 0.75rem 1rem 1rem;
+  min-width: 240px;
+  flex: 1 1 240px;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 0.4rem 0.6rem;
+}
+
+legend {
+  padding: 0 0.4rem;
+  font-weight: 600;
+  color: var(--accent);
+}
+
+label {
+  color: var(--muted);
+  font-size: 0.85rem;
+  white-space: nowrap;
+}
+
+input[type="range"] {
+  width: 100%;
+}
+
+input[type="number"] {
+  width: 4.5rem;
+  background: var(--bg);
+  color: var(--text);
+  border: 1px solid var(--panel-border);
+  border-radius: 4px;
+  padding: 0.2rem 0.35rem;
+}
+
+button {
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 0.45rem 0.9rem;
+  font-size: 0.9rem;
+  cursor: pointer;
+  margin: 0.15rem 0.25rem 0.15rem 0;
+}
+
+button:hover:not(:disabled) {
+  background: var(--accent-hover);
+}
+
+button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+#btnReset {
+  background: var(--danger);
+}
+
+/* Kleiner Farbfleck, der den aktuell eingestellten Hue zeigt */
+.hue-preview {
+  display: inline-block;
+  width: 1.4rem;
+  height: 1.4rem;
+  border-radius: 50%;
+  border: 2px solid #fff3;
+  background: hsl(25, 70%, 55%);
+  grid-column: 3;
+}
+
+/* ---------- Webcam ---------- */
+
+.webcam.hidden {
+  display: none;
+}
+
+.webcam video {
+  max-width: 480px;
+  width: 100%;
+  border-radius: 8px;
+  border: 1px solid var(--panel-border);
+  background: #000;
+}
+
+.hint {
+  color: var(--muted);
+  font-size: 0.85rem;
+  margin: 0.4rem 0 0;
+}
+
+/* ---------- Bildanzeige ---------- */
+
+.views {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.views figure {
+  margin: 0;
+  background: var(--panel);
+  border: 1px solid var(--panel-border);
+  border-radius: 8px;
+  padding: 0.75rem;
+}
+
+.views figcaption {
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+canvas {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  background:
+    repeating-conic-gradient(#22272f 0% 25%, #1a1e24 0% 50%) 0 0 / 16px 16px;
+  border-radius: 4px;
+}
+
+/* ---------- Statuszeile ---------- */
+
+#status {
+  color: var(--muted);
+  font-size: 0.85rem;
+  border-top: 1px solid var(--panel-border);
+  padding-top: 0.75rem;
+}
