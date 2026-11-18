@@ -1,98 +1,131 @@
 <!DOCTYPE html>
-<html lang="de">
+<html lang="de" data-theme="light">
 <head>
   <!-- Metadaten der Anwendung: Skintone-Experiment (HSV-Hue-Filter) -->
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Skintone-Lab — HSV-Hue-Filter</title>
+  <script>
+    // Theme früh setzen (vor dem ersten Paint), damit kein Flackern entsteht
+    document.documentElement.dataset.theme = localStorage.getItem("skintone-theme") || "light";
+  </script>
   <link rel="stylesheet" href="./styles.css" />
 </head>
 <body>
   <header>
-    <h1>Skintone-Lab</h1>
-    <p class="subtitle">
-      Portrait laden oder per Webcam aufnehmen, Hue + Toleranz wählen —
-      alles außerhalb des Hue-Bereichs wird geblurt und abgedunkelt.
-    </p>
+    <div class="header-text">
+      <h1 data-i18n="app.heading">Skintone-Lab</h1>
+      <p class="subtitle" data-i18n="app.subtitle">
+        Portrait laden oder per Webcam aufnehmen, Hue + Toleranz wählen —
+        alles außerhalb des Hue-Bereichs wird geblurt und abgedunkelt.
+      </p>
+    </div>
+    <div class="header-buttons">
+      <!-- Design wechseln: runde Schaltfläche mit Sonnen-/Mond-Icon -->
+      <button id="btnTheme" type="button" class="icon-btn round" data-i18n-title="theme.toggle" title="Design wechseln (hell/dunkel)" aria-label="Design wechseln">
+        <svg class="icon-sun" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+          <circle cx="12" cy="12" r="4" fill="currentColor" stroke="none"/>
+          <path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>
+        </svg>
+        <svg class="icon-moon" viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true">
+          <path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/>
+        </svg>
+      </button>
+      <!-- Sprache wählen: Schaltfläche mit rundem Globus-Icon klappt ein Dropdown-Menü auf -->
+      <div class="lang-wrap">
+        <button id="btnLang" type="button" class="icon-btn lang-btn" data-i18n-title="lang.toggle" title="Sprache wechseln" aria-label="Sprache wechseln" aria-haspopup="menu" aria-expanded="false">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+            <circle cx="12" cy="12" r="9"/>
+            <path d="M3 12h18M12 3c2.5 2.6 3.8 5.7 3.8 9S14.5 18.4 12 21c-2.5-2.6-3.8-5.7-3.8-9S9.5 5.6 12 3z"/>
+          </svg>
+          <span id="langCode">DE</span>
+        </button>
+        <!-- Dropdown-Menü; Einträge werden in app.js aus i18n.js befüllt -->
+        <div id="langMenu" class="lang-menu hidden" role="menu" aria-label="Sprache wählen"></div>
+      </div>
+    </div>
   </header>
 
   <main>
     <!-- ============ Steuerungsbereich ============ -->
     <section class="controls" aria-label="Steuerung">
       <fieldset>
-        <legend>Bildquelle</legend>
+        <legend data-i18n="menu.source">Bildquelle</legend>
         <!-- Datei-Upload: normales <input type="file"> -->
         <input type="file" id="fileInput" accept="image/*" hidden />
-        <button id="btnLoad" type="button">Bild laden …</button>
+        <button id="btnLoad" type="button" data-i18n="menu.loadImage">Bild laden …</button>
         <!-- Webcam: getUserMedia; "Foto aufnehmen" greift den aktuellen Frame -->
-        <button id="btnWebcamStart" type="button">Webcam starten</button>
-        <button id="btnCapture" type="button" disabled>Foto aufnehmen</button>
-        <button id="btnWebcamStop" type="button" disabled>Webcam stoppen</button>
+        <button id="btnWebcamStart" type="button" data-i18n="menu.startWebcam">Webcam starten</button>
+        <button id="btnCapture" type="button" disabled data-i18n="menu.capture">Foto aufnehmen</button>
+        <button id="btnWebcamStop" type="button" disabled data-i18n="menu.stopWebcam">Webcam stoppen</button>
         <!-- Demo-Bild: synthetisches Portrait, damit man sofort loslegen kann -->
-        <button id="btnDemo" type="button">Demo-Portrait</button>
+        <button id="btnDemo" type="button" data-i18n="menu.demo">Demo-Portrait</button>
       </fieldset>
 
       <fieldset>
-        <legend>Hue-Filter</legend>
+        <legend data-i18n="menu.hueFilter">Hue-Filter</legend>
         <!-- Hue des Zielfarbwerts in Grad [0, 360) -->
-        <label for="hue">Hue (0–359°)</label>
+        <label for="hue" data-i18n="label.hue">Hue (0–359°)</label>
         <input type="range" id="hue" min="0" max="359" step="1" value="25" />
         <input type="number" id="hueNum" min="0" max="359" step="1" value="25" />
         <!-- Toleranz +/- in Grad um den Hue-Wert -->
-        <label for="tolerance">Toleranz ± (°)</label>
+        <label for="tolerance" data-i18n="label.tolerance">Toleranz ± (°)</label>
         <input type="range" id="tolerance" min="0" max="180" step="1" value="20" />
         <input type="number" id="toleranceNum" min="0" max="180" step="1" value="20" />
         <!-- Vorschau-Farbpunkt, zeigt den gewählten Hue -->
-        <span id="huePreview" class="hue-preview" title="gewählter Hue"></span>
+        <span id="huePreview" class="hue-preview" data-i18n-title="label.huePreview" title="gewählter Hue"></span>
       </fieldset>
 
       <fieldset>
-        <legend>Effekt auf Nicht-Treffer</legend>
+        <legend data-i18n="menu.effects">Effekt auf Nicht-Treffer</legend>
         <!-- Sigma des Gaussian-Blur für den Hintergrund -->
-        <label for="blur">Blur-Stärke (σ)</label>
+        <label for="blur" data-i18n="label.blur">Blur-Stärke (σ)</label>
         <input type="range" id="blur" min="0" max="20" step="0.5" value="8" />
         <input type="number" id="blurNum" min="0" max="20" step="0.5" value="8" />
         <!-- Faktor, um den der Value (Helligkeit) abgesenkt wird -->
-        <label for="darken">Value-Absenkung</label>
+        <label for="darken" data-i18n="label.darken">Value-Absenkung</label>
         <input type="range" id="darken" min="0" max="1" step="0.05" value="0.6" />
         <input type="number" id="darkenNum" min="0" max="1" step="0.05" value="0.6" />
         <!-- Weichzeichnung der Maskenkante -->
-        <label for="feather">Kanten-Weichzeichnung</label>
+        <label for="feather" data-i18n="label.feather">Kanten-Weichzeichnung</label>
         <input type="range" id="feather" min="0" max="10" step="0.5" value="3" />
         <input type="number" id="featherNum" min="0" max="10" step="0.5" value="3" />
       </fieldset>
 
-      <fieldset>
-        <legend>Aktionen</legend>
+      <!-- Aktionen: eigenes Layout (flex/column), damit die Buttons sauber untereinander stehen -->
+      <fieldset class="actions">
+        <legend data-i18n="menu.actions">Aktionen</legend>
         <!-- Verarbeiten startet die Pipeline explizit ... -->
-        <button id="btnApply" type="button" disabled>Verarbeiten</button>
+        <button id="btnApply" type="button" disabled data-i18n="menu.apply">Verarbeiten</button>
         <!-- Zurücksetzen = Restart: Original wiederherstellen, Ergebnis leeren -->
-        <button id="btnReset" type="button" disabled>Zurücksetzen</button>
+        <button id="btnReset" type="button" disabled data-i18n="menu.reset">Zurücksetzen</button>
         <!-- Ergebnis als PNG herunterladen -->
-        <button id="btnSave" type="button" disabled>Ergebnis speichern</button>
+        <button id="btnSave" type="button" disabled data-i18n="menu.save">Ergebnis speichern</button>
       </fieldset>
     </section>
 
     <!-- ============ Webcam-Vorschau (versteckt bis Webcam aktiv) ============ -->
     <section id="webcamSection" class="webcam hidden" aria-label="Webcam">
       <video id="webcamVideo" autoplay playsinline muted></video>
-      <p class="hint">Webcam läuft — "Foto aufnehmen" übernimmt den aktuellen Frame.</p>
+      <p class="hint" data-i18n="webcam.hint">Webcam läuft — "Foto aufnehmen" übernimmt den aktuellen Frame.</p>
     </section>
 
-    <!-- ============ Bildanzeige: Original vs. Ergebnis ============ -->
-    <section class="views" aria-label="Bildanzeige">
-      <figure>
-        <figcaption>Original</figcaption>
-        <canvas id="canvasOriginal" width="640" height="480"></canvas>
-      </figure>
-      <figure>
-        <figcaption>Ergebnis (Hue-Filter)</figcaption>
-        <canvas id="canvasResult" width="640" height="480"></canvas>
+    <!-- ============ Bildanzeige: Ergebnis als große Bühne, Original als Bild im Bild (PiP) ============ -->
+    <section id="views" class="views" aria-label="Bildanzeige">
+      <figure class="stage">
+        <figcaption data-i18n="view.result">Ergebnis (Hue-Filter)</figcaption>
+        <div class="canvas-wrap">
+          <canvas id="canvasResult" width="640" height="480"></canvas>
+          <figure class="pip">
+            <figcaption data-i18n="view.original">Original</figcaption>
+            <canvas id="canvasOriginal" width="640" height="480"></canvas>
+          </figure>
+        </div>
       </figure>
     </section>
 
     <!-- Statuszeile: Meldungen, Pixel-Statistik, Laufzeit der Pipeline -->
-    <footer id="status" role="status">Bereit. Bitte ein Bild laden, Webcam starten oder Demo-Portrait verwenden.</footer>
+    <footer id="status" role="status" data-i18n="status.ready">Bereit. Bitte ein Bild laden, Webcam starten oder Demo-Portrait verwenden.</footer>
   </main>
 
   <!-- ES-Modul-Einstieg; app.js verdrahtet alle Buttons und Canvases -->

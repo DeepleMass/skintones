@@ -1,17 +1,39 @@
 /* ==========================================================================
    Skintone-Lab — Stylesheet
-   Schlichtes "Labor"-Design: dunkler Hintergrund, helle Karten, klare Controls.
+   Zwei Themes über CSS-Variablen:
+     :root                 = "Daylight" (hell, Default)
+     html[data-theme=dark] = dunkles "Labor"-Design
+   Umschalten über die runde Mond/Sonne-Schaltfläche im Header (app.js).
    ========================================================================== */
 
 :root {
+  --bg: #f3f5f9;
+  --panel: #ffffff;
+  --panel-border: #d8dee7;
+  --panel-shadow: 0 1px 3px rgba(16, 24, 40, 0.08);
+  --text: #1d2530;
+  --muted: #5c6675;
+  --accent: #2e6be6;
+  --accent-hover: #255bc4;
+  --danger: #d64541;
+  --checker-a: #eceff4;
+  --checker-b: #dfe4ec;
+  --hue-preview-border: rgba(0, 0, 0, 0.2);
+}
+
+html[data-theme="dark"] {
   --bg: #14171c;
   --panel: #1e232b;
   --panel-border: #2e3540;
+  --panel-shadow: none;
   --text: #e8eaed;
   --muted: #9aa3af;
   --accent: #4f8cff;
   --accent-hover: #6b9dff;
   --danger: #e5534b;
+  --checker-a: #22272f;
+  --checker-b: #1a1e24;
+  --hue-preview-border: rgba(255, 255, 255, 0.2);
 }
 
 * {
@@ -24,10 +46,16 @@ body {
   background: var(--bg);
   color: var(--text);
   line-height: 1.45;
+  transition: background 0.15s ease, color 0.15s ease;
 }
 
 header {
   padding: 1.25rem 1.5rem 0.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  flex-wrap: wrap;
 }
 
 header h1 {
@@ -39,6 +67,125 @@ header h1 {
   margin: 0.25rem 0 0;
   color: var(--muted);
   max-width: 70ch;
+}
+
+/* ---------- Header-Schaltflächen (Theme + Sprache) ---------- */
+
+.header-buttons {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding-top: 0.25rem;
+}
+
+.icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  background: var(--panel);
+  color: var(--text);
+  border: 1px solid var(--panel-border);
+  cursor: pointer;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0;
+  margin: 0; /* normale button-Regeln überschreiben */
+}
+
+.icon-btn:hover:not(:disabled) {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+/* runde Schaltfläche (Theme): Kreis mit Sonnen-/Mond-Icon */
+.icon-btn.round {
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 50%;
+}
+
+/* Sprach-Schaltfläche: Pill mit rundem Globus-Icon + Sprachcode */
+.icon-btn.lang-btn {
+  height: 2.25rem;
+  border-radius: 999px;
+  padding: 0 0.7rem 0 0.55rem;
+}
+
+#langCode {
+  letter-spacing: 0.05em;
+}
+
+/* ---------- Sprach-Dropdown ---------- */
+
+.lang-wrap {
+  position: relative;
+}
+
+.lang-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 20;
+  min-width: 12rem;
+  padding: 0.25rem;
+  background: var(--panel);
+  border: 1px solid var(--panel-border);
+  border-radius: 8px;
+  box-shadow: var(--panel-shadow);
+}
+
+.lang-menu.hidden {
+  display: none;
+}
+
+.lang-menu button {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  margin: 0;
+  padding: 0.4rem 0.6rem;
+  background: transparent;
+  color: var(--text);
+  border-radius: 6px;
+  font-size: 0.85rem;
+  text-align: left;
+}
+
+.lang-menu button:hover:not(:disabled) {
+  background: var(--accent);
+  color: #fff;
+}
+
+.lang-menu button.active {
+  font-weight: 700;
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+
+.lang-menu button .code {
+  color: var(--muted);
+  font-size: 0.75rem;
+  letter-spacing: 0.05em;
+}
+
+.lang-menu button:hover .code,
+.lang-menu button.active .code {
+  color: inherit;
+}
+
+/* Im hellen Theme den Mond zeigen (Klick -> dunkel), im dunklen die Sonne */
+.icon-sun {
+  display: none;
+}
+html[data-theme="dark"] .icon-sun {
+  display: block;
+}
+html[data-theme="dark"] .icon-moon {
+  display: none;
 }
 
 main {
@@ -60,6 +207,7 @@ fieldset {
   background: var(--panel);
   border: 1px solid var(--panel-border);
   border-radius: 8px;
+  box-shadow: var(--panel-shadow);
   padding: 0.75rem 1rem 1rem;
   min-width: 240px;
   flex: 1 1 240px;
@@ -118,13 +266,29 @@ button:disabled {
   background: var(--danger);
 }
 
+/* ---------- Aktionen: sauberes Layout ----------
+   Eigenes Flex-Layout (statt 3-Spalten-Grid), damit die Buttons
+   nicht auseinandergezogen werden und nicht aus dem Panel laufen. */
+
+fieldset.actions {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.4rem;
+}
+
+fieldset.actions button {
+  width: 100%;
+  margin: 0;
+}
+
 /* Kleiner Farbfleck, der den aktuell eingestellten Hue zeigt */
 .hue-preview {
   display: inline-block;
   width: 1.4rem;
   height: 1.4rem;
   border-radius: 50%;
-  border: 2px solid #fff3;
+  border: 2px solid var(--hue-preview-border);
   background: hsl(25, 70%, 55%);
   grid-column: 3;
 }
@@ -149,20 +313,63 @@ button:disabled {
   margin: 0.4rem 0 0;
 }
 
-/* ---------- Bildanzeige ---------- */
+/* ---------- Bildanzeige ----------
+   Rendering: Das Ergebnisbild füllt die Bühne so groß wie möglich (der
+   Backing-Store wird in app.js/fit.js auf die Fenstergröße skaliert).
+   Das Original liegt als kleines "Bild im Bild" (PiP) unten rechts über
+   dem Ergebnis. */
 
 .views {
   display: flex;
-  flex-wrap: wrap;
-  gap: 1rem;
 }
 
-.views figure {
+.views .stage {
   margin: 0;
+  flex: 1 1 auto;
+  min-width: 0;
   background: var(--panel);
   border: 1px solid var(--panel-border);
   border-radius: 8px;
+  box-shadow: var(--panel-shadow);
   padding: 0.75rem;
+}
+
+.canvas-wrap {
+  position: relative;
+}
+
+/* Ergebnis-Canvas: natürliche (gefittete) Größe, zentriert, maximal Bühnenbreite */
+.stage > .canvas-wrap > canvas {
+  display: block;
+  margin: 0 auto;
+  max-width: 100%;
+  height: auto;
+}
+
+/* Original als Bild im Bild (PiP), unten rechts über dem Ergebnis */
+.pip {
+  position: absolute;
+  right: 0.75rem;
+  bottom: 0.75rem;
+  width: min(30%, 240px);
+  margin: 0;
+  padding: 0.35rem;
+  background: var(--panel);
+  border: 1px solid var(--panel-border);
+  border-radius: 8px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+}
+
+.pip figcaption {
+  font-size: 0.75rem;
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+  color: var(--muted);
+}
+
+.pip canvas {
+  width: 100%;
+  height: auto;
 }
 
 .views figcaption {
@@ -175,7 +382,7 @@ canvas {
   max-width: 100%;
   height: auto;
   background:
-    repeating-conic-gradient(#22272f 0% 25%, #1a1e24 0% 50%) 0 0 / 16px 16px;
+    repeating-conic-gradient(var(--checker-a) 0% 25%, var(--checker-b) 0% 50%) 0 0 / 16px 16px;
   border-radius: 4px;
 }
 

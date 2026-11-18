@@ -1,0 +1,382 @@
+/**
+ * i18n.js — Mehrsprachigkeit der Skintone-Web-App (reines Modul, testbar in Node).
+ *
+ * Unterstützte Sprachen: Deutsch (de), Englisch (en), Französisch (fr),
+ * Spanisch (es), Italienisch (it), Chinesisch (zh), Japanisch (ja).
+ *
+ * Aufbau:
+ *   - LANGUAGES: Reihenfolge, in der die Sprach-Schaltfläche weiterschaltet.
+ *   - STRINGS: pro Sprache ein flaches Schlüssel -> Text-Objekt. Platzhalter
+ *     werden als {name} im Text geschrieben und per t(key, params) ersetzt.
+ *   - createI18n(lang): liefert { lang, setLang, t, applyDom, nextLang }.
+ *     applyDom() schreibt alle Texte mit data-i18n / data-i18n-title im DOM
+ *     um und setzt <html lang> sowie den Dokumenttitel.
+ */
+
+export const LANGUAGES = ["de", "en", "fr", "es", "it", "zh", "ja"];
+
+/** Anzeigename der Sprache in der Sprache selbst (für Tooltips). */
+export const LANGUAGE_NAMES = {
+  de: "Deutsch",
+  en: "English",
+  fr: "Français",
+  es: "Español",
+  it: "Italiano",
+  zh: "中文",
+  ja: "日本語",
+};
+
+export const STRINGS = {
+  de: {
+    "app.title": "Skintone-Lab — HSV-Hue-Filter",
+    "app.heading": "Skintone-Lab",
+    "app.subtitle": "Portrait laden oder per Webcam aufnehmen, Hue + Toleranz wählen — alles außerhalb des Hue-Bereichs wird geblurt und abgedunkelt.",
+    "menu.source": "Bildquelle",
+    "menu.loadImage": "Bild laden …",
+    "menu.startWebcam": "Webcam starten",
+    "menu.capture": "Foto aufnehmen",
+    "menu.stopWebcam": "Webcam stoppen",
+    "menu.demo": "Demo-Portrait",
+    "menu.hueFilter": "Hue-Filter",
+    "menu.effects": "Effekt auf Nicht-Treffer",
+    "menu.actions": "Aktionen",
+    "menu.apply": "Verarbeiten",
+    "menu.reset": "Zurücksetzen",
+    "menu.save": "Ergebnis speichern",
+    "label.hue": "Hue (0–359°)",
+    "label.tolerance": "Toleranz ± (°)",
+    "label.blur": "Blur-Stärke (σ)",
+    "label.darken": "Value-Absenkung",
+    "label.feather": "Kanten-Weichzeichnung",
+    "label.huePreview": "gewählter Hue",
+    "view.original": "Original",
+    "view.result": "Ergebnis (Hue-Filter)",
+    "webcam.hint": "Webcam läuft — „Foto aufnehmen“ übernimmt den aktuellen Frame.",
+    "theme.toggle": "Design wechseln (hell/dunkel)",
+    "lang.toggle": "Sprache wechseln",
+    "status.ready": "Bereit. Bitte ein Bild laden, Webcam starten oder Demo-Portrait verwenden.",
+    "status.loaded": "{label}: {width}×{height} geladen — verarbeitet …",
+    "status.invalidParams": "Ungültige Parameter: {error}",
+    "status.result": "Hue {hue}° ± {tolerance}° — {matched}/{total} Pixel im Bereich ({pct} %), Pipeline in {ms} ms.",
+    "status.loadError": "Fehler: „{name}“ konnte nicht als Bild gelesen werden.",
+    "status.noWebcam": "Webcam nicht verfügbar: getUserMedia fehlt (HTTPS/localhost nötig?).",
+    "status.webcamRunning": "Webcam läuft — mit „Foto aufnehmen“ einen Frame übernehmen.",
+    "status.webcamError": "Webcam-Fehler: {error} (Kamerazugriff erlaubt?)",
+    "status.webcamStopped": "Webcam gestoppt.",
+    "status.reset": "Zurückgesetzt — Original ist wieder unverändert sichtbar.",
+    "status.saved": "Ergebnis als „skintone-ergebnis.png“ gespeichert.",
+    "source.uploadFile": "Upload „{name}“",
+    "source.webcam": "Webcam-Foto",
+    "source.demo": "Demo-Portrait",
+    "source.default": "Standardbild",
+  },
+  en: {
+    "app.title": "Skintone-Lab — HSV hue filter",
+    "app.heading": "Skintone-Lab",
+    "app.subtitle": "Load a portrait or record via webcam, choose hue + tolerance — everything outside the hue range gets blurred and darkened.",
+    "menu.source": "Image source",
+    "menu.loadImage": "Load image …",
+    "menu.startWebcam": "Start webcam",
+    "menu.capture": "Take photo",
+    "menu.stopWebcam": "Stop webcam",
+    "menu.demo": "Demo portrait",
+    "menu.hueFilter": "Hue filter",
+    "menu.effects": "Effect on non-matches",
+    "menu.actions": "Actions",
+    "menu.apply": "Process",
+    "menu.reset": "Reset",
+    "menu.save": "Save result",
+    "label.hue": "Hue (0–359°)",
+    "label.tolerance": "Tolerance ± (°)",
+    "label.blur": "Blur strength (σ)",
+    "label.darken": "Value reduction",
+    "label.feather": "Edge feathering",
+    "label.huePreview": "selected hue",
+    "view.original": "Original",
+    "view.result": "Result (hue filter)",
+    "webcam.hint": "Webcam is running — “Take photo” grabs the current frame.",
+    "theme.toggle": "Toggle theme (light/dark)",
+    "lang.toggle": "Switch language",
+    "status.ready": "Ready. Load an image, start the webcam or use the demo portrait.",
+    "status.loaded": "{label}: {width}×{height} loaded — processing …",
+    "status.invalidParams": "Invalid parameters: {error}",
+    "status.result": "Hue {hue}° ± {tolerance}° — {matched}/{total} pixels in range ({pct} %), pipeline in {ms} ms.",
+    "status.loadError": "Error: “{name}” could not be read as an image.",
+    "status.noWebcam": "Webcam unavailable: getUserMedia missing (HTTPS/localhost required?).",
+    "status.webcamRunning": "Webcam running — use “Take photo” to grab a frame.",
+    "status.webcamError": "Webcam error: {error} (camera access allowed?)",
+    "status.webcamStopped": "Webcam stopped.",
+    "status.reset": "Reset — the original is visible unchanged again.",
+    "status.saved": "Result saved as “skintone-ergebnis.png”.",
+    "source.uploadFile": "Upload “{name}”",
+    "source.webcam": "Webcam photo",
+    "source.demo": "Demo portrait",
+    "source.default": "Default image",
+  },
+  fr: {
+    "app.title": "Skintone-Lab — Filtre de teinte HSV",
+    "app.heading": "Skintone-Lab",
+    "app.subtitle": "Chargez un portrait ou filmez via la webcam, choisissez la teinte + tolérance — tout ce qui est hors de la plage de teinte est flouté et assombri.",
+    "menu.source": "Source d’image",
+    "menu.loadImage": "Charger une image …",
+    "menu.startWebcam": "Démarrer la webcam",
+    "menu.capture": "Prendre une photo",
+    "menu.stopWebcam": "Arrêter la webcam",
+    "menu.demo": "Portrait démo",
+    "menu.hueFilter": "Filtre de teinte",
+    "menu.effects": "Effet sur les non-correspondances",
+    "menu.actions": "Actions",
+    "menu.apply": "Traiter",
+    "menu.reset": "Réinitialiser",
+    "menu.save": "Enregistrer le résultat",
+    "label.hue": "Teinte (0–359°)",
+    "label.tolerance": "Tolérance ± (°)",
+    "label.blur": "Intensité du flou (σ)",
+    "label.darken": "Réduction de la valeur",
+    "label.feather": "Adoucissement des bords",
+    "label.huePreview": "teinte sélectionnée",
+    "view.original": "Original",
+    "view.result": "Résultat (filtre de teinte)",
+    "webcam.hint": "La webcam est active — « Prendre une photo » capture l’image courante.",
+    "theme.toggle": "Changer de thème (clair/sombre)",
+    "lang.toggle": "Changer de langue",
+    "status.ready": "Prêt. Chargez une image, démarrez la webcam ou utilisez le portrait démo.",
+    "status.loaded": "{label} : {width}×{height} chargé — traitement …",
+    "status.invalidParams": "Paramètres invalides : {error}",
+    "status.result": "Teinte {hue}° ± {tolerance}° — {matched}/{total} pixels dans la plage ({pct} %), pipeline en {ms} ms.",
+    "status.loadError": "Erreur : « {name} » n’a pas pu être lu comme image.",
+    "status.noWebcam": "Webcam indisponible : getUserMedia absent (HTTPS/localhost requis ?).",
+    "status.webcamRunning": "Webcam active — « Prendre une photo » capture une image.",
+    "status.webcamError": "Erreur webcam : {error} (accès caméra autorisé ?)",
+    "status.webcamStopped": "Webcam arrêtée.",
+    "status.reset": "Réinitialisé — l’original est de nouveau visible inchangé.",
+    "status.saved": "Résultat enregistré sous « skintone-ergebnis.png ».",
+    "source.uploadFile": "Téléversement « {name} »",
+    "source.webcam": "Photo webcam",
+    "source.demo": "Portrait démo",
+    "source.default": "Image par défaut",
+  },
+  es: {
+    "app.title": "Skintone-Lab — Filtro de tono HSV",
+    "app.heading": "Skintone-Lab",
+    "app.subtitle": "Carga un retrato o graba con la webcam, elige tono + tolerancia — todo lo que queda fuera del rango de tono se desenfoca y se oscurece.",
+    "menu.source": "Fuente de imagen",
+    "menu.loadImage": "Cargar imagen …",
+    "menu.startWebcam": "Iniciar webcam",
+    "menu.capture": "Tomar foto",
+    "menu.stopWebcam": "Detener webcam",
+    "menu.demo": "Retrato de demo",
+    "menu.hueFilter": "Filtro de tono",
+    "menu.effects": "Efecto en no coincidentes",
+    "menu.actions": "Acciones",
+    "menu.apply": "Procesar",
+    "menu.reset": "Restablecer",
+    "menu.save": "Guardar resultado",
+    "label.hue": "Tono (0–359°)",
+    "label.tolerance": "Tolerancia ± (°)",
+    "label.blur": "Intensidad de desenfoque (σ)",
+    "label.darken": "Reducción de valor",
+    "label.feather": "Suavizado de bordes",
+    "label.huePreview": "tono seleccionado",
+    "view.original": "Original",
+    "view.result": "Resultado (filtro de tono)",
+    "webcam.hint": "La webcam está activa — «Tomar foto» captura el fotograma actual.",
+    "theme.toggle": "Cambiar tema (claro/oscuro)",
+    "lang.toggle": "Cambiar idioma",
+    "status.ready": "Listo. Carga una imagen, inicia la webcam o usa el retrato de demo.",
+    "status.loaded": "{label}: {width}×{height} cargado — procesando …",
+    "status.invalidParams": "Parámetros no válidos: {error}",
+    "status.result": "Tono {hue}° ± {tolerance}° — {matched}/{total} píxeles en el rango ({pct} %), pipeline en {ms} ms.",
+    "status.loadError": "Error: «{name}» no se pudo leer como imagen.",
+    "status.noWebcam": "Webcam no disponible: falta getUserMedia (¿HTTPS/localhost?).",
+    "status.webcamRunning": "Webcam en marcha — usa «Tomar foto» para capturar un fotograma.",
+    "status.webcamError": "Error de webcam: {error} (¿acceso a la cámara permitido?)",
+    "status.webcamStopped": "Webcam detenida.",
+    "status.reset": "Restablecido — el original vuelve a verse sin cambios.",
+    "status.saved": "Resultado guardado como «skintone-ergebnis.png».",
+    "source.uploadFile": "Subida «{name}»",
+    "source.webcam": "Foto de webcam",
+    "source.demo": "Retrato de demo",
+    "source.default": "Imagen predeterminada",
+  },
+  it: {
+    "app.title": "Skintone-Lab — Filtro tonalità HSV",
+    "app.heading": "Skintone-Lab",
+    "app.subtitle": "Carica un ritratto o registra con la webcam, scegli tinta + tolleranza — tutto ciò che è fuori dall’intervallo di tinta viene sfocato e scurito.",
+    "menu.source": "Sorgente immagine",
+    "menu.loadImage": "Carica immagine …",
+    "menu.startWebcam": "Avvia webcam",
+    "menu.capture": "Scatta foto",
+    "menu.stopWebcam": "Ferma webcam",
+    "menu.demo": "Ritratto demo",
+    "menu.hueFilter": "Filtro tinta",
+    "menu.effects": "Effetto sui non corrispondenti",
+    "menu.actions": "Azioni",
+    "menu.apply": "Elabora",
+    "menu.reset": "Reimposta",
+    "menu.save": "Salva risultato",
+    "label.hue": "Tinta (0–359°)",
+    "label.tolerance": "Tolleranza ± (°)",
+    "label.blur": "Intensità sfocatura (σ)",
+    "label.darken": "Riduzione del valore",
+    "label.feather": "Sfaldatura dei bordi",
+    "label.huePreview": "tinta selezionata",
+    "view.original": "Originale",
+    "view.result": "Risultato (filtro tinta)",
+    "webcam.hint": "La webcam è attiva — «Scatta foto» cattura il frame corrente.",
+    "theme.toggle": "Cambia tema (chiaro/scuro)",
+    "lang.toggle": "Cambia lingua",
+    "status.ready": "Pronto. Carica un’immagine, avvia la webcam o usa il ritratto demo.",
+    "status.loaded": "{label}: {width}×{height} caricato — elaborazione …",
+    "status.invalidParams": "Parametri non validi: {error}",
+    "status.result": "Tinta {hue}° ± {tolerance}° — {matched}/{total} pixel nell’intervallo ({pct} %), pipeline in {ms} ms.",
+    "status.loadError": "Errore: «{name}» non può essere letto come immagine.",
+    "status.noWebcam": "Webcam non disponibile: getUserMedia mancante (HTTPS/localhost richiesto?).",
+    "status.webcamRunning": "Webcam in funzione — usa «Scatta foto» per catturare un frame.",
+    "status.webcamError": "Errore webcam: {error} (accesso alla fotocamera consentito?)",
+    "status.webcamStopped": "Webcam fermata.",
+    "status.reset": "Reimpostato — l’originale è di nuovo visibile invariato.",
+    "status.saved": "Risultato salvato come «skintone-ergebnis.png».",
+    "source.uploadFile": "Caricamento «{name}»",
+    "source.webcam": "Foto webcam",
+    "source.demo": "Ritratto demo",
+    "source.default": "Immagine predefinita",
+  },
+  zh: {
+    "app.title": "Skintone-Lab — HSV 色相滤镜",
+    "app.heading": "Skintone-Lab",
+    "app.subtitle": "加载肖像或用摄像头拍摄，选择色相 + 容差 — 色相范围以外的所有区域都会被模糊并压暗。",
+    "menu.source": "图像来源",
+    "menu.loadImage": "加载图片 …",
+    "menu.startWebcam": "启动摄像头",
+    "menu.capture": "拍照",
+    "menu.stopWebcam": "停止摄像头",
+    "menu.demo": "演示肖像",
+    "menu.hueFilter": "色相滤镜",
+    "menu.effects": "对未命中区域的效果",
+    "menu.actions": "操作",
+    "menu.apply": "处理",
+    "menu.reset": "重置",
+    "menu.save": "保存结果",
+    "label.hue": "色相 (0–359°)",
+    "label.tolerance": "容差 ± (°)",
+    "label.blur": "模糊强度 (σ)",
+    "label.darken": "明度降低",
+    "label.feather": "边缘羽化",
+    "label.huePreview": "当前色相",
+    "view.original": "原图",
+    "view.result": "结果（色相滤镜）",
+    "webcam.hint": "摄像头运行中 — 点击“拍照”可抓取当前画面。",
+    "theme.toggle": "切换主题（亮/暗）",
+    "lang.toggle": "切换语言",
+    "status.ready": "就绪。请加载图片、启动摄像头或使用演示肖像。",
+    "status.loaded": "{label}：{width}×{height} 已加载 — 处理中 …",
+    "status.invalidParams": "参数无效：{error}",
+    "status.result": "色相 {hue}° ± {tolerance}° — 范围内像素 {matched}/{total}（{pct} %），管线耗时 {ms} 毫秒。",
+    "status.loadError": "错误：“{name}” 无法作为图像读取。",
+    "status.noWebcam": "摄像头不可用：缺少 getUserMedia（需要 HTTPS/localhost？）。",
+    "status.webcamRunning": "摄像头运行中 — 使用“拍照”抓取一帧。",
+    "status.webcamError": "摄像头错误：{error}（是否允许访问摄像头？）",
+    "status.webcamStopped": "摄像头已停止。",
+    "status.reset": "已重置 — 原图恢复为未修改状态。",
+    "status.saved": "结果已保存为 “skintone-ergebnis.png”。",
+    "source.uploadFile": "上传“{name}”",
+    "source.webcam": "摄像头照片",
+    "source.demo": "演示肖像",
+    "source.default": "默认图片",
+  },
+  ja: {
+    "app.title": "Skintone-Lab — HSV 色相フィルター",
+    "app.heading": "Skintone-Lab",
+    "app.subtitle": "ポートレートを読み込むかウェブカメラで撮影し、色相 + 許容差を選択 — 色相範囲外はすべてぼかされて暗くなります。",
+    "menu.source": "画像ソース",
+    "menu.loadImage": "画像を読み込む …",
+    "menu.startWebcam": "ウェブカメラを開始",
+    "menu.capture": "写真を撮る",
+    "menu.stopWebcam": "ウェブカメラを停止",
+    "menu.demo": "デモポートレート",
+    "menu.hueFilter": "色相フィルター",
+    "menu.effects": "不一致への効果",
+    "menu.actions": "アクション",
+    "menu.apply": "処理",
+    "menu.reset": "リセット",
+    "menu.save": "結果を保存",
+    "label.hue": "色相 (0–359°)",
+    "label.tolerance": "許容差 ± (°)",
+    "label.blur": "ぼかし強度 (σ)",
+    "label.darken": "明度の低下",
+    "label.feather": "エッジのフェザー",
+    "label.huePreview": "選択中の色相",
+    "view.original": "オリジナル",
+    "view.result": "結果（色相フィルター）",
+    "webcam.hint": "ウェブカメラ動作中 — 「写真を撮る」で現在のフレームを取得します。",
+    "theme.toggle": "テーマを切り替え（ライト/ダーク）",
+    "lang.toggle": "言語を切り替え",
+    "status.ready": "準備完了。画像を読み込むか、ウェブカメラを開始するか、デモポートレートを使用してください。",
+    "status.loaded": "{label}：{width}×{height} を読み込みました — 処理中 …",
+    "status.invalidParams": "無効なパラメータ：{error}",
+    "status.result": "色相 {hue}° ± {tolerance}° — 範囲内 {matched}/{total} ピクセル（{pct} %）、パイプライン {ms} ms。",
+    "status.loadError": "エラー：「{name}」を画像として読み込めませんでした。",
+    "status.noWebcam": "ウェブカメラが利用できません：getUserMedia がありません（HTTPS/localhost が必要？）。",
+    "status.webcamRunning": "ウェブカメラ動作中 — 「写真を撮る」でフレームを取得できます。",
+    "status.webcamError": "ウェブカメラエラー：{error}（カメラへのアクセスは許可されていますか？）",
+    "status.webcamStopped": "ウェブカメラを停止しました。",
+    "status.reset": "リセットしました — オリジナルが変更なしで再び表示されます。",
+    "status.saved": "結果を「skintone-ergebnis.png」として保存しました。",
+    "source.uploadFile": "アップロード「{name}」",
+    "source.webcam": "ウェブカメラ写真",
+    "source.demo": "デモポートレート",
+    "source.default": "デフォルト画像",
+  },
+};
+
+/**
+ * Erzeugt ein i18n-Objekt für die Anwendung.
+ * @param {string} initialLang Sprachcode, z. B. "de" (Fallback, falls ungültig)
+ */
+export function createI18n(initialLang) {
+  let lang = LANGUAGES.includes(initialLang) ? initialLang : "de";
+
+  /**
+   * Übersetzt einen Schlüssel und ersetzt {platzhalter}.
+   * Fällt auf Deutsch und dann auf den Schlüssel selbst zurück.
+   * @param {string} key z. B. "menu.actions"
+   * @param {object} [params] z. B. { hue: 25 }
+   * @returns {string}
+   */
+  function t(key, params) {
+    let template = (STRINGS[lang] && STRINGS[lang][key]) ?? STRINGS.de[key] ?? key;
+    if (params) {
+      for (const [name, value] of Object.entries(params)) {
+        template = template.replaceAll(`{${name}}`, String(value));
+      }
+    }
+    return template;
+  }
+
+  /**
+   * Schreibt alle Übersetzungen ins DOM: Elemente mit data-i18n bekommen
+   * textContent, Elemente mit data-i18n-title bekommen das title-Attribut.
+   * Setzt außerdem <html lang> und den Dokumenttitel.
+   */
+  function applyDom() {
+    document.documentElement.lang = lang;
+    document.title = t("app.title");
+    for (const node of document.querySelectorAll("[data-i18n]")) {
+      node.textContent = t(node.dataset.i18n);
+    }
+    for (const node of document.querySelectorAll("[data-i18n-title]")) {
+      node.title = t(node.dataset.i18nTitle);
+    }
+  }
+
+  return {
+    get lang() { return lang; },
+    /** Setzt die aktive Sprache (ungültige Codes werden ignoriert). */
+    setLang(next) { if (LANGUAGES.includes(next)) lang = next; },
+    /** Nächste Sprache in der Weiterschalt-Reihenfolge. */
+    nextLang() { return LANGUAGES[(LANGUAGES.indexOf(lang) + 1) % LANGUAGES.length]; },
+    t,
+    applyDom,
+  };
+}

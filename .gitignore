@@ -1,3 +1,6 @@
 # Python-Artefakte (z. B. durch flask_app-Tests erzeugt)
 __pycache__/
 *.pyc
+
+# Logs der Webapp (server.log, browser.log, launcher.log, gui.log + Rotationen)
+webapplogs/

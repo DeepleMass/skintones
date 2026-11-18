@@ -14,32 +14,43 @@ Dieses Verzeichnis ist das Git-Repo-Root. Die Web-App liegt im Unterordner
 
 ```
 .                            # Repo-Root
-├── .gitignore               # ignoriert __pycache__/, *.pyc
+├── .gitignore               # ignoriert __pycache__/, *.pyc, webapplogs/
 ├── README.md                # diese Datei
-├── start.py                 # Start-Skript: Flask starten + Browser öffnen
+├── start.py                 # Start-Skript: Flask starten + Browser öffnen (+ Logging)
 ├── start.sh                 # Wrapper: ./start.sh
+├── server_gui.py            # tkinter-Mini-App: Server per Button starten/restarten/stoppen
+├── test_server_gui.py       # Tests für server_gui.py (headless, echter Flask-Subprozess)
+├── webapplogs/              # Logfolder (wird zur Laufzeit angelegt, gitignored)
+│   ├── server.log           # Flask: Requests, Status, Dauer, Fehler mit Stacktrace
+│   ├── browser.log          # Frontend-Logs via POST /api/log (inkl. window.onerror)
+│   ├── launcher.log         # start.py: Start/Stop, Health-Poll
+│   └── gui.log              # server_gui.py: Klicks, Start/Stop/Restart
 ├── images/
 │   └── default-image.jpg    # fertiges Testbild zum Hochladen in der App
 └── webapp/
-    ├── index.html           # UI: Upload, Webcam, Slider, Buttons, 2 Canvases
-    ├── styles.css           # Stylesheet
+    ├── index.html           # UI: Upload, Webcam, Slider, Buttons, 2 Canvases, Sprach-/Theme-Buttons
+    ├── styles.css           # Stylesheet mit Daylight- (Default) und Dark-Theme
     ├── package.json         # Metadaten + npm-Skripte (test, start)
     ├── src/
     │   ├── hsv.js           # RGB<->HSV, zirkulare Hue-Distanz (Wrap bei 0/360)
     │   ├── blur.js          # separabler Gaussian-Blur (RGBA + Float-Maske)
     │   ├── pipeline.js      # komplette Verarbeitungsroutine (Maske -> Feather -> Blur+Darken -> Compositing)
     │   ├── demo.js          # synthetisches Demo-Portrait (Sofort-Test ohne Bild)
-    │   └── app.js           # UI-Verdrahtung (DOM, Canvas, Webcam via getUserMedia)
+    │   ├── i18n.js          # Übersetzungen de/en/fr/es/it/zh/ja + Sprachumschaltung
+    │   ├── logger.js        # Frontend-Logging: Konsole + POST /api/log, globale Fehler-Handler
+    │   └── app.js           # UI-Verdrahtung (DOM, Canvas, Webcam via getUserMedia) + Logging
     ├── test/                # Node-Testrunner (node --test), ohne npm-Deps
     │   ├── hsv.test.js      # Unit-Tests HSV/Hue-Distanz
     │   ├── blur.test.js     # Unit-Tests Kernel + Blur
     │   ├── pipeline.test.js # Unit + Pixel-Integration (Zwei-Hue-Bild)
     │   ├── e2e.test.js      # Ende-zu-Ende: Demo-Portrait komplett durch die Pipeline
-    │   └── project.test.js # Integrity: index.html-Referenzen, IDs, Projektstruktur
+    │   ├── i18n.test.js     # Übersetzungen: Vollständigkeit, Platzhalter, Sprachzyklus
+    │   ├── logger.test.js   # Logging: Transport, Level, globale Fehler-Handler
+    │   └── project.test.js # Integrity: index.html-Referenzen, IDs, Projektstruktur, el-Regression
     └── flask_app/
-        ├── app.py           # Flask-Server: liefert webapp/ statisch aus
+        ├── app.py           # Flask-Server: statisch + /api/health + /api/log + Request-Logging
         ├── requirements.txt # flask>=3.0
-        └── test_app.py      # Flask-Tests (test_client): /, /api/health, MIME-Typen
+        └── test_app.py      # Flask-Tests (test_client): /, /api/health, /api/log, MIME-Typen, Logging
 ```
 
 ## Schnellstart — Projekt im Browser ausprobieren (mit Flask)
@@ -47,14 +58,44 @@ Dieses Verzeichnis ist das Git-Repo-Root. Die Web-App liegt im Unterordner
 ```bash
 # aus dem Repo-Root:
 pip install -r webapp/flask_app/requirements.txt   # einmalig: Flask installieren
+python3 server_gui.py                              # tkinter-GUI: Button "Server starten / neu starten"
 python3 start.py                                   # startet Flask UND öffnet den Browser
 # oder: ./start.sh                                # dasselbe als Shell-Wrapper
 # oder manuell: cd webapp && flask --app flask_app.app:app run --port 5824
 ```
 
-Danach im Browser `http://127.0.0.1:5824/` öffnen und z. B. **„Demo-Portrait“**
-klicken — oder `images/default-image.jpg` über „Bild laden …“ hochladen /
-Webcam starten.
+**Im VS Code (Workspace-Root ist der Ordner über diesem Repo):** Palette öffnen
+(`Strg+Shift+P`) → **„Tasks: Run Task“** → **„webapp: Server-GUI starten“**
+— führt `server_gui.py` in einer eigenen Konsole aus (Task definiert in
+`.vscode/tasks.json`, Pfad-Variable `skintones.webappDir` in `.vscode/settings.json`).
+
+**Server-GUI (`server_gui.py`):** Mini-Fenster mit einem Button zum **Starten /
+Neu starten (Restart)**, „Stoppen“ und „Browser öffnen“, Port-Wahl und einem
+Live-Log-Tail aus `webapplogs/`. Erkennt automatisch das `../.venv`-Python,
+falls Flask dort installiert ist.
+
+**Logging (`webapplogs/`):** Alle Komponenten loggen ausführlich in den
+Logfolder `webapplogs/` im Repo-Root (täglich rotiert, 14 Backups, gitignored;
+für Tests umschaltbar über `SKINTONE_LOG_DIR`):
+
+| Datei | Inhalt |
+|---|---|
+| `app.log` | **alle Logs fortlaufend in einer Datei** — Server, Browser, Launcher und GUI schreiben alle hier hinein; das GUI-Fenster zeigt genau diesen Tail live an |
+| `server.log` | jeder Request (Methode, Pfad, Status, Dauer, User-Agent), 404/500 mit Stacktrace |
+| `browser.log` | Frontend-Logs via `POST /api/log`: Boot, Button-Klicks, Parameter-Änderungen, Bild-Skalierung (`image.loaded` mit Roh-/Zielgröße + Faktor), Pipeline-Start/-Ergebnis, `window.onerror`/`unhandledrejection` **mit Stacktrace, Datei und Zeile** |
+| `launcher.log` | `start.py`: Start/Stop, Health-Poll-Versuche, Fehler |
+| `gui.log` | `server_gui.py`: Klicks, Start/Stop/Restart, Health-Poll, Fenster-Events |
+
+So landet z. B. ein `"undefined is not an object (evaluating 'el.hue.value')"`
+automatisch mit Stacktrace und den rohen Input-Werten in `browser.log` —
+manuelles Zurückmelden ist nicht nötig:
+`grep -n "ERROR" webapplogs/browser.log`
+
+Danach im Browser `http://127.0.0.1:5824/` öffnen — das Default-Image
+`images/default-image.jpg` (Repo-Root, wird von Flask unter `/images/…`
+ausgeliefert) wird **beim Start automatisch geladen** und sofort verarbeitet.
+Danach kann man z. B. **„Demo-Portrait“** klicken oder ein eigenes Bild über
+„Bild laden …“ hochladen / Webcam starten.
 
 Jeder andere statische Server geht auch, z. B. `cd webapp && python3 -m http.server 8000`.
 
@@ -76,8 +117,26 @@ schlägt fehl (Meldung in der Statuszeile).
 | Zurücksetzen | Restart: Ergebnis verwerfen, Original bleibt |
 | Ergebnis speichern | PNG-Download |
 
-Bilder werden vor der Verarbeitung auf max. 1280 px Kantenlänge skaliert
-(Seitenverhältnis bleibt erhalten) — das hält die Pipeline im Browser flüssig.
+Bilder werden beim Laden **auf die Fenstergröße skaliert** (hoch oder herunter,
+Seitenverhältnis bleibt erhalten; absolute Obergrenze 1280 px, siehe
+`src/fit.js`). Beim Fenster-Resize wird automatisch neu skaliert.
+**Rendering:** Das Ergebnisbild füllt die Bühne so groß wie möglich; das
+Original wird als kleines **Bild im Bild (PiP)** unten rechts über das
+Ergebnis gelegt (Stage + `.pip`-Overlay in `index.html`/`styles.css`).
+
+### Themes und Sprachen
+
+- **Daylight-Theme:** Die App startet hell (`data-theme="light"` auf `<html>`,
+  Variablen in `:root` in `styles.css`). Über die runde Sonne/Mond-Schaltfläche
+  oben rechts wechselt man ins dunkle Theme (`html[data-theme="dark"]`);
+  die Wahl liegt in `localStorage` (`skintone-theme`) und wird vor dem ersten
+  Paint per Inline-Skript im `<head>` gesetzt (kein Flackern).
+- **Mehrsprachigkeit:** Alle Menüeinträge, Labels, Buttons, Tooltips und
+  Statusmeldungen liegen in `src/i18n.js` für **de, en, fr, es, it, zh, ja**.
+  Die Schaltfläche mit dem runden Globus-Icon oben rechts klappt ein
+  **Dropdown-Menü** auf (Sprache wählen per Klick, schließt bei Klick
+  außerhalb/Escape; Wahl in `localStorage` unter `skintone-lang`).
+  Texte im DOM tragen `data-i18n`-/`data-i18n-title`-Attribute.
 
 ## Die Bildverarbeitungsroutine (Pipeline)
 
@@ -100,8 +159,9 @@ Node ≥ 20 genügt; Flask-Test nutzt `unittest`). Aufruf aus `webapp/`:
 
 ```bash
 cd webapp
-node --test                            # 33 JS-Tests (Unit + Integration + E2E + Integrity)
-python3 -m unittest flask_app.test_app # 5 Flask-Server-Tests
+node --test                            # JS-Tests (Unit + Integration + E2E + i18n + Logging + Integrity)
+python3 -m unittest flask_app.test_app # Flask-Server-Tests inkl. /api/log und Logging (aus webapp/)
+python3 -m unittest test_server_gui    # GUI-Controller-Tests: echter Flask-Subprozess (aus Repo-Root)
 # Flask-Tests alternativ als Repo-Paket vom Elternordner des Repos:
 cd .. && python3 -m unittest skintones.webapp.flask_app.test_app
 ```
@@ -110,16 +170,23 @@ Testarten:
 - **Unit:** HSV-Konvertierung (bekannte Werte, Roundtrip ±1), Hue-Distanz
   (Wrap, Symmetrie, inkl. Toleranzgrenze), Gaussian-Kernel (Summe=1,
   symmetrisch), Blur (konstantes Bild bleibt konstant, Impuls verteilt sich,
-  Energieerhalt), Parameter-Validierung (Toleranz > 180° wird abgelehnt).
+  Energieerhalt), Parameter-Validierung (Toleranz > 180° wird abgelehnt),
+  i18n (alle 7 Sprachen vollständig, Platzhalter konsistent, Zyklus),
+  logger (Transport, Level-Normalisierung, globale Fehler-Handler).
 - **Integration (Pixel-Ebene):** synthetisches Zwei-Hue-Bild — Treffer-Hälfte
   bleibt exakt gleich, Nicht-Treffer-Hälfte wird abgedunkelt mit erhaltenem Hue.
 - **E2E (ohne Browser):** komplettes Demo-Portrait durch die Pipeline;
   Gesichts-Pixel unverändert, Hintergrund-Ecke abgedunkelt, Laufzeit gemessen.
 - **Integrity:** alle in `index.html` referenzierten Dateien existieren;
-  `app.js` verdrahtet genau die IDs aus dem HTML; Projektstruktur in
-  `webapp/` und Repo-Root (Start-Skripte, README, .gitignore) ist vollständig.
+  `app.js` verdrahtet genau die IDs aus dem HTML; Regressionstest, dass alle
+  Parameter-Inputs am `el`-Objekt hängen (Bug: „el.hue.value" auf undefined);
+  Projektstruktur in `webapp/` und Repo-Root ist vollständig.
 - **Flask:** `GET /` liefert HTML, `/api/health` JSON, JS-Dateien mit
-  korrektem JavaScript-MIME-Typ (wichtig für ES-Module), 404 für Unsinn.
+  korrektem JavaScript-MIME-Typ (wichtig für ES-Module), 404 für Unsinn,
+  `POST /api/log` schreibt Browser-Logs nach `browser.log` (204/400),
+  Requests landen in `server.log`.
+- **GUI-Controller:** `ServerController` startet/stoppt/restartet einen echten
+  Flask-Subprozess (Health-Poll, Port zu nach Stop, Logs in `gui.log`).
 
 ## Annahmen / Hinweise
 
@@ -130,4 +197,4 @@ Testarten:
 - Portrait-Annahme: keine Gesichtserkennung, wie in der Anforderung vorgesehen.
 - Sprache: Kommentare/Doku/UI auf Deutsch, Identifiers auf Englisch.
 - Git: Remote `skintones` (github.com/DeepleMass/skintones) ist konfiguriert;
-  `__pycache__/` und `*.pyc` werden per `.gitignore` ausgeschlossen.
+  `__pycache__/`, `*.pyc` und `webapplogs/` werden per `.gitignore` ausgeschlossen.
